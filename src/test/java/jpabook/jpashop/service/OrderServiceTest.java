@@ -1,4 +1,4 @@
-package jpabook.jpashop.domain.service;
+package jpabook.jpashop.service;
 
 import jpabook.jpashop.domain.Address;
 import jpabook.jpashop.domain.Member;
@@ -8,7 +8,6 @@ import jpabook.jpashop.domain.item.Book;
 import jpabook.jpashop.domain.item.Item;
 import jpabook.jpashop.exception.NotEnoughStockException;
 import jpabook.jpashop.repository.OrderRepository;
-import jpabook.jpashop.service.OrderService;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,13 +19,16 @@ import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.fail;
 
 @RunWith(SpringRunner.class)
 @SpringBootTest
 @Transactional
 public class OrderServiceTest {
+
     @PersistenceContext
     EntityManager em;
+
     @Autowired
     OrderService orderService;
     @Autowired
@@ -55,12 +57,34 @@ public class OrderServiceTest {
     }
 
     @Test(expected = NotEnoughStockException.class)
-    public void 상품주문_재고수량초과() throws Exception { //...
+    public void 상품주문_재고수량초과() throws Exception {
+        //given
+        Member member = createMember();
+        Item item = createBook("책이름", 10000, 10);
+        int orderCount = 11;
+
+        //when
+        orderService.order(member.getId(), item.getId(), orderCount);
+
+        //then
+        fail("재고 수량 부족으로 예외가 발생해야 한다.");
     }
 
     @Test
     public void 주문취소() {
-        //...
+        //Given
+        Member member = createMember();
+        Item item = createBook("책이름", 10000, 10);
+        int orderCount = 2;
+        Long orderId = orderService.order(member.getId(), item.getId(), orderCount);
+
+        //When
+        orderService.cancelOrder(orderId);
+
+        //Then
+        Order getOrder = orderRepository.findOne(orderId);
+        assertEquals("주문 취소시 상태는 CANCEL 이다.", OrderStatus.CANCEL, getOrder.getStatus());
+        assertEquals("주문이 취소된 상품은 그만큼 재고가 증가해야 한다.", 10, item.getStockQuantity());
     }
 
     private Member createMember() {
