@@ -18,12 +18,14 @@ spring:
     driver-class-name: org.h2.Driver
 
   jpa:
+    open-in-view : true
     hibernate:
       ddl-auto: create-drop
     properties:
       hibernate:
         show_sql: true
         format_sql: true
+        default_batch_fetch_size: 500
 
 logging.level:
   org.hibernate.SQL: debug
